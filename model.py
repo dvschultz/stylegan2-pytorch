@@ -292,7 +292,7 @@ class NoiseInjection(nn.Module):
 
 
 class ConstantInput(nn.Module):
-    def __init__(self, channel, size=4):
+    def __init__(self, channel, size=8):
         super().__init__()
 
         self.input = nn.Parameter(torch.randn(1, channel, size, size))
