@@ -1,4 +1,6 @@
 import argparse
+import os
+import subprocess
 
 import torch
 from torchvision import utils
@@ -51,6 +53,13 @@ if __name__ == "__main__":
         type=str,
         help="name of the closed form factorization result factor file",
     )
+    parser.add_argument(
+        "--vid_increment", type=float, default=0.1, help="increment degree for interpolation video"
+    )
+    vid_parser = parser.add_mutually_exclusive_group(required=False)
+    vid_parser.add_argument('--video', dest='vid', action='store_true')
+    vid_parser.add_argument('--no-video', dest='vid', action='store_false')
+    vid_parser.set_defaults(vid=False)
 
     args = parser.parse_args()
 
@@ -92,3 +101,46 @@ if __name__ == "__main__":
         range=(-1, 1),
         nrow=args.n_sample,
     )
+
+    if(args.vid):
+        count = 0
+        for l in latent:
+            fname = f"{args.out_prefix}_index-{args.index}_degree-{args.degree}_index-{count}"
+            if not os.path.exists(fname):
+                os.makedirs(fname)
+            d = -1*args.degree
+
+            fcount = 0
+            while d < args.degree:
+                # generate latent
+                dir = d * eigvec[:, args.index].unsqueeze(0)
+                img, _ = g(
+                    [l + dir],
+                    truncation=args.truncation,
+                    truncation_latent=trunc,
+                    input_is_latent=True,
+                )
+
+                # generate latent
+                grid = utils.save_image(
+                    img,
+                    f"{fname}/{fname}_{fcount:04}.png",
+                    normalize=True,
+                    range=(-1, 1),
+                    nrow=1,
+                )
+
+                d+=args.vid_increment
+                fcount+=1
+
+
+            cmd=f"ffmpeg -y -r 24 -i {fname}/{fname}_%04d.png -vcodec libx264 -pix_fmt yuv420p {fname}/{fname}.mp4"
+            subprocess.call(cmd, shell=True)
+
+            count+=1
+
+
+
+
+
+            
