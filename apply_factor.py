@@ -7,6 +7,14 @@ from torchvision import utils
 
 from model import Generator
 
+def line_interpolate(zs, steps):
+   out = []
+   for i in range(len(zs)-1):
+    for index in range(steps):
+     fraction = index/float(steps) 
+     out.append(zs[i+1]*fraction + zs[i]*(1-fraction))
+   return out
+
 
 if __name__ == "__main__":
     torch.set_grad_enabled(False)
@@ -108,14 +116,14 @@ if __name__ == "__main__":
             fname = f"{args.out_prefix}_index-{args.index}_degree-{args.degree}_index-{count}"
             if not os.path.exists(fname):
                 os.makedirs(fname)
-            d = -1*args.degree
+
+            zs = line_interpolate([l-direction, l+direction], int((args.degree*2)/args.vid_increment))
 
             fcount = 0
-            while d < args.degree:
+            for z in zs:
                 # generate latent
-                dir = d * eigvec[:, args.index].unsqueeze(0)
                 img, _ = g(
-                    [l + dir],
+                    [z],
                     truncation=args.truncation,
                     truncation_latent=trunc,
                     input_is_latent=True,
@@ -130,7 +138,6 @@ if __name__ == "__main__":
                     nrow=1,
                 )
 
-                d+=args.vid_increment
                 fcount+=1
 
 
