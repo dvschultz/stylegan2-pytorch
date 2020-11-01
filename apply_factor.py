@@ -127,6 +127,7 @@ if __name__ == "__main__":
                     truncation=args.truncation,
                     truncation_latent=trunc,
                     input_is_latent=True,
+                    randomize_noise=False
                 )
 
                 # generate latent
